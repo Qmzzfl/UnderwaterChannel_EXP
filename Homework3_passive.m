@@ -3,11 +3,12 @@ clear;clc;close all;
 %% %%%%%%%%%%%%%%% SIMULATION SETTINGS %%%%%%%%%%%%%%%%%%%%%%
 % sonar location setting
 d_sonar_tang = 2;
-d_sonar_normal = 2; 
-d_sonar_radial = 2;
+d_sonar_normal = 150; 
+d_sonar_radial = 150;
 
 % Infinity space configure
-d_infinity = 1500;
+d_infinity_y = 500;
+d_infinity_z = 100;
 
 % multi-channel simulation setting
 f_end_transfer = 50000;                                     %the end value of f
@@ -40,10 +41,11 @@ f0_LFM = 1000;
 f1_LFM = 1100;
 LFM = chirp(t_signal,f0_LFM,t_signal_end,f1_LFM);
 LFM_flip = flip(LFM);
+% noise setting
+global SNR;
+SNR = 20;
 
 %%%%%%%%%%%%%%%%%%%% INFINITY SPACE %%%%%%%%%%%%%%%%%%%%
-% noise setting
-SNR = 20;
 % time list
 t_observe_end = 5;
 t_observe = 0:dt:t_observe_end;
@@ -56,7 +58,7 @@ y_rec_LFM_infty2 = zeros(1,length(t_observe));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% %%%%%%%%%%%%%%   Tangental     %%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-d_infty_tang_x = sqrt(d_infinity^2+d_sonar_tang^2);
+d_infty_tang_x = sqrt(d_infinity_y^2+d_infinity_z^2+d_sonar_tang^2);
 %%%%%%%%%%%%%%%%%%%%%%%%%% CW %%%%%%%%%%%%%%%%%%%%%%%%%%
 % Recieve CW in infinity space when sonar place in tangental direction
 [y_rec_CW_infty1,y_rec_CW_infty2,y_CW_infty_envp] = ...
@@ -72,12 +74,58 @@ receive_infty(y_rec_LFM_infty1,y_rec_LFM_infty2,d_infty_tang_x,d_infty_tang_x,LF
 % Draw
 figure(2)
 suptitle("无限大空间中被动声呐水听器切向排布时接收信号与其互相关(LFM脉冲)");
+draw_signal(y_rec_LFM_infty1,y_rec_LFM_infty2,y_LFM_infty_envp,t_observe,t_corr);
+
+%% %%%%%%%%%%%%%%   Normal         %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+d_infty_norm_x1 = sqrt(d_infinity_y^2+(d_infinity_z-d_sonar_normal)^2);
+d_infty_norm_x2 = sqrt(d_infinity_y^2+(d_infinity_z+d_sonar_normal)^2);
+%%%%%%%%%%%%%%%%%%%%%%%%%% CW %%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve CW in infinity space when sonar place in tangental direction
+[y_rec_CW_infty1,y_rec_CW_infty2,y_CW_infty_envp] = ...
+receive_infty(y_rec_CW_infty1,y_rec_CW_infty2,d_infty_norm_x1,d_infty_norm_x2,CW);
+% Draw
+figure(3)
+suptitle("无限大空间中被动声呐水听器法向排布时接收信号与其互相关(CW脉冲)");
 draw_signal(y_rec_CW_infty1,y_rec_CW_infty2,y_CW_infty_envp,t_observe,t_corr);
+%%%%%%%%%%%%%%%%%%%%%%%%%% LFM %%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve LFM in infinity space when sonar place in tangental direction
+[y_rec_LFM_infty1,y_rec_LFM_infty2,y_LFM_infty_envp] = ...
+receive_infty(y_rec_LFM_infty1,y_rec_LFM_infty2,d_infty_norm_x1,d_infty_norm_x2,LFM);
+% Draw
+figure(4)
+suptitle("无限大空间中被动声呐水听器法向排布时接收信号与其互相关(LFM脉冲)");
+draw_signal(y_rec_LFM_infty1,y_rec_LFM_infty2,y_LFM_infty_envp,t_observe,t_corr);
+
+%% %%%%%%%%%%%%%%   radioal         %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+d_infty_rad_x1 = sqrt(d_infinity_z^2+(d_infinity_y-d_sonar_radial)^2);
+d_infty_rad_x2 = sqrt(d_infinity_z^2+(d_infinity_y+d_sonar_radial)^2);
+%%%%%%%%%%%%%%%%%%%%%%%%%% CW %%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve CW in infinity space when sonar place in tangental direction
+[y_rec_CW_infty1,y_rec_CW_infty2,y_CW_infty_envp] = ...
+receive_infty(y_rec_CW_infty1,y_rec_CW_infty2,d_infty_rad_x1,d_infty_rad_x2,CW);
+% Draw
+figure(5)
+suptitle("无限大空间中被动声呐水听器径向排布时接收信号与其互相关(CW脉冲)");
+draw_signal(y_rec_CW_infty1,y_rec_CW_infty2,y_CW_infty_envp,t_observe,t_corr);
+%%%%%%%%%%%%%%%%%%%%%%%%%% LFM %%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve LFM in infinity space when sonar place in tangental direction
+[y_rec_LFM_infty1,y_rec_LFM_infty2,y_LFM_infty_envp] = ...
+receive_infty(y_rec_LFM_infty1,y_rec_LFM_infty2,d_infty_rad_x1,d_infty_rad_x2,LFM);
+% Draw
+figure(6)
+suptitle("无限大空间中被动声呐水听器径向排布时接收信号与其互相关(LFM脉冲)");
+draw_signal(y_rec_LFM_infty1,y_rec_LFM_infty2,y_LFM_infty_envp,t_observe,t_corr);
+
+
+
 
 
 function [signal1,signal2,signal_xcorr] = receive_infty(empty1,empty2,d1,d2,signal)
-    global c_w;
-    global dt;
+    global c_w dt SNR;
+    empty1(:)=0;
+    empty2(:)=0;
     n_transmission1 = round(d1/c_w/dt);
     empty1(n_transmission1:n_transmission1+length(signal)-1) = signal/d1;
     signal1 = awgn(empty1,SNR,'measured');
