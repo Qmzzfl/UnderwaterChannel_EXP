@@ -19,10 +19,10 @@ global dt;
 dt = 1/f_end_transfer;
 
 %  multi-channel configure
-H_multichannel = 100;               %deep of shallow sea
-d1_multichannel = 55;               %distance between surface and source
-d2_multichannel = 60;               %distance between surface and hydrophone
-d_x_multichannel = 150;             %horizontal distance
+H_multichannel = 1000;               %deep of shallow sea
+d1_multichannel = 155;               %distance between surface and source
+d2_multichannel = 260;               %distance between surface and hydrophone
+d_x_multichannel = 500;             %horizontal distance
 zw = 1.5e6;                         %resistance of water
 zb = 3.6e6;                         %resistance of seabed
 global c_w;                          
@@ -43,9 +43,9 @@ LFM = chirp(t_signal,f0_LFM,t_signal_end,f1_LFM);
 LFM_flip = flip(LFM);
 % noise setting
 global SNR;
-SNR = 20;
+SNR = -20;
 
-%%%%%%%%%%%%%%%%%%%% INFINITY SPACE %%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%% INFINITY SPACE %%%%%%%%%%%%%%%%%%%%
 % time list
 t_observe_end = 5;
 t_observe = 0:dt:t_observe_end;
@@ -118,6 +118,99 @@ figure(6)
 suptitle("无限大空间中被动声呐水听器径向排布时接收信号与其互相关(LFM脉冲)");
 draw_signal(y_rec_LFM_infty1,y_rec_LFM_infty2,y_LFM_infty_envp,t_observe,t_corr);
 
+%% %%%%%%%%%%%%%%%%%%%%%%% MULTI-CHANNEL %%%%%%%%%%%%%%%%%%%%%
+% Multi-channel setting
+t_observe_end = 5;
+t_observe = 0:dt:t_observe_end;
+t_ht_end = 5;
+n_ht_end = t_ht_end*5000000/100;
+t_conv = 0:dt:t_ht_end+t_signal_end-dt;
+t_corr = -t_conv(end):dt:t_conv(end);
+ref_num = 3;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%   Tangental     %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+d_x_multichannel_tang = sqrt(d_x_multichannel^2+d_sonar_tang^2);
+ht1 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
+                    d_x_multichannel_tang,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
+ht2 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
+                    d_x_multichannel_tang,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
+%%%%%%%%%%%%%%%%%%%%%%%%%%% CW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve LFM in multichannel when sonar place in tangental direction
+[y_rec_CW_multichannel1,y_rec_CW_multichannel2,y_CW_multichannel_envp] = ...
+receive_multichannel(ht1(1:n_ht_end),ht2(1:n_ht_end),CW);
+% Draw
+figure(7)
+suptitle("相干多途信道中被动声呐水听器切向排布时接收信号与其互相关(CW脉冲)")
+draw_signal(y_rec_CW_multichannel1,y_rec_CW_multichannel2,y_CW_multichannel_envp,...
+            t_conv,t_corr);
+%%%%%%%%%%%%%%%%%%%%%%%%%%% LFM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve LFM in multichannel when sonar place in tangental direction
+[y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp] = ...
+receive_multichannel(ht1(1:n_ht_end),ht2(1:n_ht_end),LFM);
+% Draw
+figure(8)
+suptitle("相干多途信道中被动声呐水听器切向排布时接收信号与其互相关(CW脉冲)")
+draw_signal(y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp,...
+            t_conv,t_corr);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%   Normal     %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ht1 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel-d_sonar_normal,...
+                    d_x_multichannel,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
+ht2 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel+d_sonar_normal,...
+                    d_x_multichannel,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
+%%%%%%%%%%%%%%%%%%%%%%%%%%% CW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve LFM in multichannel when sonar place in tangental direction
+[y_rec_CW_multichannel1,y_rec_CW_multichannel2,y_CW_multichannel_envp] = ...
+receive_multichannel(ht1(1:n_ht_end),ht2(1:n_ht_end),CW); 
+% Draw
+figure(9)
+suptitle("相干多途信道中被动声呐水听器切向排布时接收信号与其互相关(CW脉冲)")
+draw_signal(y_rec_CW_multichannel1,y_rec_CW_multichannel2,y_CW_multichannel_envp,...
+            t_conv,t_corr);
+%%%%%%%%%%%%%%%%%%%%%%%%%%% LFM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve LFM in multichannel when sonar place in tangental direction
+[y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp] = ...
+receive_multichannel(ht1(1:n_ht_end),ht2(1:n_ht_end),LFM);
+% Draw
+figure(10)
+suptitle("相干多途信道中被动声呐水听器切向排布时接收信号与其互相关(CW脉冲)")
+draw_signal(y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp,...
+            t_conv,t_corr);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%   radial         %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ht1 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
+                    d_x_multichannel-d_sonar_radial,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
+ht2 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
+                    d_x_multichannel+d_sonar_radial,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
+%%%%%%%%%%%%%%%%%%%%%%%%%%% CW %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve LFM in multichannel when sonar place in tangental direction
+[y_rec_CW_multichannel1,y_rec_CW_multichannel2,y_CW_multichannel_envp] = ...
+receive_multichannel(ht1(1:n_ht_end),ht2(1:n_ht_end),CW);
+% Draw
+figure(11)
+suptitle("相干多途信道中被动声呐水听器切向排布时接收信号与其互相关(CW脉冲)")
+draw_signal(y_rec_CW_multichannel1,y_rec_CW_multichannel2,y_CW_multichannel_envp,...
+            t_conv,t_corr);
+%%%%%%%%%%%%%%%%%%%%%%%%%%% LFM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Recieve LFM in multichannel when sonar place in tangental direction
+[y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp] = ...
+receive_multichannel(ht1(1:n_ht_end),ht2(1:n_ht_end),LFM);
+% Draw
+figure(12)
+suptitle("相干多途信道中被动声呐水听器切向排布时接收信号与其互相关(CW脉冲)")
+draw_signal(y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp,...
+            t_conv,t_corr);
 
 
 
@@ -132,6 +225,14 @@ function [signal1,signal2,signal_xcorr] = receive_infty(empty1,empty2,d1,d2,sign
     n_transmission2 = round(d2/c_w/dt);
     empty2(n_transmission2:n_transmission2+length(signal)-1) = signal/d2;
     signal2 = awgn(empty2,SNR,'measured');
+    y_conv = xcorr(signal1,signal2);
+    signal_xcorr = envelope(y_conv,30,'rms');
+end
+
+function [signal1,signal2,signal_xcorr] = receive_multichannel(ht1,ht2,signal)
+    global SNR;
+    signal1 = awgn(conv(ht1,signal),SNR,'measured');
+    signal2 = awgn(conv(ht2,signal),SNR,'measured');
     y_conv = xcorr(signal1,signal2);
     signal_xcorr = envelope(y_conv,30,'rms');
 end
