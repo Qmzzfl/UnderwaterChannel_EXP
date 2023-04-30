@@ -11,8 +11,8 @@
 %   horizon_d: horizon distance between source and hydrophone
 %   Depth:the depth of sea
 %   c:wave speed in media 
-%   z1-media resistance  z2-seabed resistance
 %   c1-media sound speed c2-seabed sound speed
+%   z1-media resistance  z2-seabed resistance
 %Function Return:The transfer function of the multichannel
 function Transfer_Function = Transfer(reflection_times,...
                                       f_list,...

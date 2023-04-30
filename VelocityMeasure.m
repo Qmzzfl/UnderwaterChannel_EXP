@@ -1,29 +1,34 @@
 clc;close all;clear;
-t_end = 10;
+
+% simulation time
+t_end = 5;
 dt = 0.001;
 t = 0:dt:t_end;
-f = 200;
-me = 1;
+conv_t = -t_end:dt:t_end;
+fs = 1/dt;
 
-measure_number = 500;
+% signal configure
+f_start = 200;% static start frequency
+f_end = 500;% static  end  frequency
+signal = chirp(t,f_start,t(end),f_end);
 
-measure_signal = zeros(measure_number,length(t));
-df_range = 10;
-ddf = df_range*2/measure_number;
-i = 1;
-for df = -df_range:ddf:df_range-ddf
-    measure_signal(i,:) = sin((f+me*t+df).*t);
-    i = i + 1;
+% Dopler configure
+f_shift_lim = 10; % the max of |Dopler frequency shift|
+measure_num = 100; % the number of tests
+f_shift_axis = linspace(-f_shift_lim,f_shift_lim,measure_num);
+f_start_shift = linspace(f_start-f_shift_lim,f_start+f_shift_lim,measure_num);
+f_end_shift = linspace(f_end-f_shift_lim,f_end+f_shift_lim,measure_num);
+
+% Dopler signal generate
+test_signal = zeros(measure_num,length(t));
+for i =1:100
+    test_signal(i,:) = chirp(t,f_start_shift(i),t(end),f_end_shift(i));
 end
 
-t_r_end = 20;
-t_r = 0:dt:t_r_end;
-df_r = 10;
-received_signal = sin((f+me*t_r+df_r).*t_r);
-measure_result = zeros(measure_number,length(t)+length(t_r)-1);
-for j = 1:measure_number
-    measure_result(j,:) = xcorr2(received_signal,measure_signal(j,:));
+measure_result = zeros(measure_num,2*length(t)-1);
+for i = 1:100
+   measure_result(i,:) = xcorr(signal,test_signal(i,:));
 end
 
-surf(measure_result);
+surf(conv_t,f_shift_axis,measure_result);
 shading interp
