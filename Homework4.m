@@ -1,5 +1,6 @@
 clc;clear;close all;
 
+profile on
 t_range = linspace(0,32.9,258);
 df_max = 258/32.9/2;
 df_range = linspace(-df_max,df_max,258);
@@ -117,6 +118,7 @@ ylim([-50,0])
 title("Power Delay Profile (PDP): $10log_{10}(\int s(\tau,\varphi)d\varphi)$",'interpreter','latex');
 xlabel("Time Delay $\tau$(ms)",'interpreter','latex');
 ylabel("Power Density(dB)",'interpreter','latex');
+drawnow;
 
 %% calculate CW signal in time-varible channel
 dt = 128/1000/2048;
@@ -148,6 +150,7 @@ waterfall(rec_t,t_range,rec_signal_CW_envp);
 shading interp
 subplot(224)
 waterfall(corr_t,t_range,rec_corr_CW);
+drawnow;
 
 %% calculate LFM signal in time-varible channel
 dt = 128/1000/2048;
@@ -178,6 +181,7 @@ subplot(211)
 plot(signal_t,real(LFM_signal));
 subplot(223)
 waterfall(rec_t,t_range,rec_signal_LFM_envp);
-shading interp
 subplot(224)
 waterfall(corr_t,t_range,rec_corr_LFM);
+drawnow;
+profile viewer

@@ -6,23 +6,23 @@ d_sonar_tang = 2;
 d_sonar_normal = 150; 
 d_sonar_radial = 150;
 
-% Infinity space configure
+%% Infinity space configure
 d_infinity_y = 500;
-d_infinity_z = 100;
+d_infinity_z = 0;
 
-% multi-channel simulation setting
-f_end_transfer = 5000;                                     %the end value of f
+%% multi-channel simulation setting
+f_end_transfer = 10000;                                     %the end value of f
 df_transfer = 0.1;                                         %delta f
 f_transfer = 0:df_transfer:f_end_transfer-df_transfer;      %argument f of transfer function
 T_transfer = f_transfer/df_transfer/f_end_transfer;         %argument t of system function(calculate according to DSP theory) 
 global dt;
 dt = 1/f_end_transfer;
 
-%  multi-channel configure
+%%  multi-channel configure
 H_multichannel = 100;               %deep of shallow sea
 d1_multichannel = 50;               %distance between surface and source
 d2_multichannel = 50;               %distance between surface and hydrophone
-d_x_multichannel = 500;             %horizontal distance
+d_x_multichannel = 1500;             %horizontal distance
 zw = 1.5e6;                         %resistance of water
 zb = 3.6e6;                         %resistance of seabed
 global c_w;                          
@@ -33,17 +33,17 @@ c_b = 3e3;                          %speed of sound in seabed
 t_signal_end = 0.1;
 t_signal = 0:dt:t_signal_end;
 % CW signal
-f_CW = 1000;
+f_CW = 100;
 CW = cos(2*pi*f_CW*t_signal);
 CW_flip = flip(CW);
 % LFM signal
-f0_LFM = 1000;
-f1_LFM = 1100;
-LFM = chirp(t_signal,f0_LFM,t_signal_end,f1_LFM);
+f0_LFM = 200;
+BW_LFM = 10;
+LFM = chirp(t_signal,f0_LFM,t_signal_end,f0_LFM+BW_LFM);
 LFM_flip = flip(LFM);
 % noise setting
 global SNR;
-SNR = 40;
+SNR = 30;
 
 %% %%%%%%%%%%%%%%%%%% INFINITY SPACE %%%%%%%%%%%%%%%%%%%%
 % time list
@@ -211,14 +211,14 @@ figure(12)
 suptitle("相干多途信道中被动声呐水听器径向排布时接收信号与其互相关(LFM脉冲)")
 draw_signal(y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp,...
             t_conv,t_corr);
+drawnow;
 
 %% multi-channel multi exp
 figure(13)
-test_domain = 0:0.1:20;
+test_domain = 0:0.1:45;
 j = 1;
 test_domain_len = length(test_domain);
 test_res = zeros(1,test_domain_len);
-
 % radial
 for i = test_domain
     ht_test1 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
@@ -235,34 +235,16 @@ for i = test_domain
     j = j + 1;
 end
 hold on
-plot(test_domain,test_res);
-
-% normal
-ht_test1 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
-                d_x_multichannel,H_multichannel,c_w,c_b,zw,zb),...
-       'symmetric');
-j = 1;
-for i = test_domain
-
-    ht_test2 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel+i,...
-                    d_x_multichannel,H_multichannel,c_w,c_b,zw,zb),...
-           'symmetric');
-   [y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp] = ...
-        receive_multichannel(ht_test1(1:n_ht_end),ht_test2(1:n_ht_end),LFM);
-%     corr_test = corrcoef(y_rec_LFM_multichannel1,y_rec_LFM_multichannel2);
-%     test_res(j) = abs(corr_test(1,2));
-    test_res(j) = max(y_LFM_multichannel_envp);
-    j = j + 1;
-end
+test_res = test_res/max(test_res,[],'all');
 plot(test_domain,test_res);
 
 % tangental
-ht_test1 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
-                d_x_multichannel,H_multichannel,c_w,c_b,zw,zb),...
-       'symmetric');
 j = 1;
 for i = test_domain
     d_x_multichannel_tang = sqrt(d_x_multichannel^2+i^2);
+    ht_test1 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
+                    d_x_multichannel_tang,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
     ht_test2 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel,...
                     d_x_multichannel_tang,H_multichannel,c_w,c_b,zw,zb),...
            'symmetric');
@@ -273,9 +255,37 @@ for i = test_domain
     test_res(j) = max(y_LFM_multichannel_envp);
     j = j + 1;
 end
+test_res = test_res/max(test_res,[],'all');
 plot(test_domain,test_res);
-legend(["径向","法向","切向"])
 
+%test_domain = 0:0.02:9;
+% normal
+j = 1;
+for i = test_domain
+    ht_test1 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel-i,...
+                    d_x_multichannel,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
+    ht_test2 = ifft(Transfer(ref_num,f_transfer,d1_multichannel,d2_multichannel+i,...
+                    d_x_multichannel,H_multichannel,c_w,c_b,zw,zb),...
+           'symmetric');
+   [y_rec_LFM_multichannel1,y_rec_LFM_multichannel2,y_LFM_multichannel_envp] = ...
+        receive_multichannel(ht_test1(1:n_ht_end),ht_test2(1:n_ht_end),LFM);
+%     corr_test = corrcoef(y_rec_LFM_multichannel1,y_rec_LFM_multichannel2);
+%     test_res(j) = abs(corr_test(1,2));
+    test_res(j) = max(y_LFM_multichannel_envp);
+    j = j + 1;
+end
+test_res = test_res/max(test_res,[],'all');
+plot(test_domain,test_res);
+xlabel("阵元间距/m");
+ylabel("归一化互相关系数");
+legend(["法向","切向","径向"])
+
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% function defination
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [signal1,signal2,signal_xcorr] = receive_infty(empty1,empty2,d1,d2,signal)
     global c_w dt SNR;
     empty1(:)=0;

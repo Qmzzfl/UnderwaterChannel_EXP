@@ -1,7 +1,7 @@
 clear;clc;close all;
 
 % Infinity space configure
-d_infinity = 1500;
+d_infinity = 150;
 
 %  multi-channel configure
 H_multichannel = 100;               %deep of shallow sea
@@ -24,13 +24,13 @@ dt = 1/f_end_transfer;
 t_signal_end = 0.1;
 t_signal = 0:dt:t_signal_end;
 % CW signal
-f_CW = 1000;
+f_CW = 300;
 CW = cos(2*pi*f_CW*t_signal);
 CW_flip = flip(CW);
 % LFM signal
-f0_LFM = 1000;
-f1_LFM = 2000;
-LFM = chirp(t_signal,f0_LFM,t_signal_end,f1_LFM);
+f0_LFM = 300;
+BW_LFM = 50;
+LFM = chirp(t_signal,f0_LFM,t_signal_end,f0_LFM+BW_LFM);
 LFM_flip = flip(LFM);
 
 %% %%%%%%%%%%%%% INFINITY-CHANNEL %%%%%%%%%%%%%%%%%%%
@@ -42,7 +42,7 @@ t_corr = 0:dt:t_observe_end+t_signal_end;
 % recieve list
 y_rec_CW_infty = zeros(1,length(t_observe));
 y_rec_LFM_infty = zeros(1,length(t_observe));
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Recieve CW in infinity space
 n_transmission_CW_infty = round(d_infinity/c_w/dt);
 y_rec_CW_infty(n_transmission_CW_infty:n_transmission_CW_infty+length(CW)-1) = CW/d_infinity;
@@ -50,7 +50,7 @@ y_rec_CW_infty = awgn(y_rec_CW_infty,SNR,'measured');
 y_corr_CW_infty = conv(CW_flip,y_rec_CW_infty);
 % Draw
 figure(1)
-suptitle("CW脉冲在无限大空间中的传播");
+sgtitle("CW脉冲在无限大空间中的传播");
 subplot('position',[0.13,0.67,0.8,0.2])
 plot(t_signal,CW);
 xlabel("时间/s");
@@ -67,7 +67,8 @@ xlim([0 t_observe_end+t_signal_end]);
 xlabel("时间/s");
 ylabel("信号幅值");
 title("接收信号经过拷贝相关器后的波形");
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+drawnow;
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Recieve LFM in infinity space
 n_transmission_LFM_infty = round(d_infinity/c_w/dt);
 y_rec_LFM_infty(n_transmission_LFM_infty:n_transmission_LFM_infty+length(LFM)-1) = LFM/d_infinity;
@@ -75,7 +76,7 @@ y_rec_LFM_infty = awgn(y_rec_LFM_infty,SNR,'measured');
 y_corr_LFM_infty = conv(LFM_flip,y_rec_LFM_infty);
 % Draw
 figure(2)
-suptitle("LFM脉冲在无限大空间中的传播");
+sgtitle("LFM脉冲在无限大空间中的传播");
 subplot('position',[0.13,0.67,0.8,0.2])
 plot(t_signal,LFM);
 xlabel("时间/s");
@@ -92,6 +93,7 @@ xlim([0 t_observe_end+t_signal_end]);
 xlabel("时间/s");
 ylabel("信号幅值");
 title("接收信号经过拷贝相关器后的波形");
+drawnow;
 
 %% %%%%%%%%%%%%% MULTI-CHANNEL %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -122,7 +124,8 @@ xlim([0 t_observe_end]);
 xlabel("时间/s");
 ylabel("冲激响应函数幅值");
 title("多途信道的冲激响应函数");
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+drawnow;
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Recieve CW in multi-channel 
 y_rec_CW_multichannel = conv(ht(1:n_ht_end),CW);
 y_rec_CW_multichannel = awgn(y_rec_CW_multichannel,SNR,'measured');
@@ -147,7 +150,8 @@ xlim([0 t_observe_end+t_signal_end]);
 xlabel("时间/s");
 ylabel("信号幅值");
 title("接收信号经过拷贝相关器后的波形");
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+drawnow;
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Recieve LFM in multi-channel
 y_rec_LFM_multichannel = conv(ht(1:500000),LFM);
 y_rec_LFM_multichannel = awgn(y_rec_LFM_multichannel,SNR,'measured');
@@ -172,3 +176,4 @@ xlim([0 t_observe_end+t_signal_end]);
 xlabel("时间/s");
 ylabel("信号幅值");
 title("接收信号经过拷贝相关器后的波形");
+drawnow;
